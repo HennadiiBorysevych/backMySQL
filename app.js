@@ -1,32 +1,27 @@
 const path = require("path");
 const express = require("express");
-
-const mysql = require("mysql");
+const cookieParser = require("cookie-parser");
 
 const dotenv = require("dotenv").config({ path: "./.env" });
+const db = require("./model/db");
 
 const app = express();
 
 const publicDir = path.join(__dirname, "/public");
+
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: "",
-  database: process.env.DB,
-});
 
 app.set("view engine", "hbs");
 
 app.use(express.static(publicDir));
 
-db.connect((error) => {
-  if (error) {
-    console.log(error);
+db.start.connect(function (err) {
+  if (err) {
+    console.log("Error connecting to the database");
   } else {
-    console.log("MySQL connected");
+    console.log("Connected to MYSQL");
   }
 });
 
