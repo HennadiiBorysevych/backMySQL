@@ -8,6 +8,8 @@ const dotenv = require("dotenv").config({ path: "./.env" });
 const app = express();
 
 const publicDir = path.join(__dirname, "/public");
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -28,13 +30,17 @@ db.connect((error) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.render('index')
-});
+// app.get("/", (req, res) => {
+//   res.render('index')
+// });
 
-app.get("/register", (req, res) => {
-  res.render('register')
-});
+// app.get("/register", (req, res) => {
+//   res.render('register')
+// });
+
+app.use("/", require("./routes/pages"));
+
+app.use("/auth", require("./routes/auth"));
 
 app.listen(5000, () => {
   console.log("Server started on port 5000");
