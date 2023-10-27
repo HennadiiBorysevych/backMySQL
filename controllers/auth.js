@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-
+const { promisify } = require("util");
 const db = require("../model/db");
 
 exports.register = (req, res) => {
@@ -10,6 +10,7 @@ exports.register = (req, res) => {
     "SELECT email FROM users WHERE email = ?",
     [email],
     async (error, result) => {
+
       if (error) {
         console.log(error);
       }
@@ -64,8 +65,8 @@ exports.login = (req, res) => {
     "SELECT * FROM users WHERE email = ?",
     [email],
     (error, result) => {
-      console.log(result);
-      console.log(password);
+      // console.log(result);
+      // console.log(password);
 
       const isPasswordCorrect = bcrypt.compare(password, result[0].password);
 
@@ -93,4 +94,46 @@ exports.login = (req, res) => {
   );
 
   // res.send("form submit");
+};
+
+exports.isLoggedIn = async (req, res, next) => {
+  // console.log(req.cookies.jwt);
+
+  if (req.cookies.jwt) {
+    console.log("1");
+    try {
+      const decoded = jwt.verify(req.cookies.jwt, process.env.JWT_SECRET);
+      // console.log(decoded);
+
+      db.start.query(
+        "SELECT * FROM users WHERE id = ?",
+        [decoded.id],
+        (error, result) => {
+          console.log("🚀 : result", result);
+
+          if (!result) {
+            next();
+          }
+
+          req.user = result[0];
+
+          return next();
+        }
+      );
+    } catch (error) {
+      return next();
+    }
+  } else {
+    next();
+  }
+};
+
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true
+  });
+  
+  res.status(200).redirect("/");
 };
